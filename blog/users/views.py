@@ -1,6 +1,7 @@
 import re
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 
 # Create your views here.
 
@@ -47,7 +48,7 @@ class RegisterView(View):
             logger.error(e)
             return HttpResponseBadRequest('注册失败')
         #返回响应
-        return HttpResponse('注册成功，自动跳转到首页')
+        return redirect(reverse('home:index'))
 
 
 
