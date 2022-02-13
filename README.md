@@ -1,0 +1,2 @@
+# blog_exercise
+blog_exercise_python_django
