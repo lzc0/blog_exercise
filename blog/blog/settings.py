@@ -192,3 +192,5 @@ LOGGING = {
 }
 
 
+#替换系统user
+AUTH_USER_MODEL = 'users.User'
