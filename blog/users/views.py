@@ -48,7 +48,16 @@ class RegisterView(View):
             logger.error(e)
             return HttpResponseBadRequest('注册失败')
         #返回响应
-        return redirect(reverse('home:index'))
+
+        from django.contrib.auth import login
+        login(request, user)
+
+        response = redirect(reverse('home:index'))
+        #设置cookie信息
+        response.set_cookie('is_login', True)
+        response.set_cookie('username', user.username, max_age=7 * 24 * 3600)
+
+        return response
 
 
 
