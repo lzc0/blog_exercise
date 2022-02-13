@@ -1,17 +1,56 @@
+import re
+
 from django.shortcuts import render
 
 # Create your views here.
 
 #注册视图
 from django.views import View
-
-
+from django.http.response import HttpResponseBadRequest
+import re
+from users.models import User
+from django.db import DatabaseError
 
 class RegisterView(View):
 
     def get(self, request):
 
         return render(request, 'register.html')
+
+    def post(self, request):
+        #接收数据
+        mobile = request.POST.get('mobile')
+        password = request.POST.get('password')
+        password2 = request.POST.get('password2')
+        smscode = request.POST.get('sms_code')
+        #验证数据
+        if not all([mobile, password, password2, smscode]):
+            return HttpResponseBadRequest('缺少必要参数')
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return HttpResponseBadRequest('您输入的手机号码有误')
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return HttpResponseBadRequest('请输入8-20位密码，密码由数组或字母组成')
+        if password != password2:
+            return HttpResponseBadRequest('两次密码不一致')
+        redis_conn = get_redis_connection('default')
+        redis_sms_code = redis_conn.get('sms:%s' % mobile)
+        if redis_sms_code is None:
+            return HttpResponseBadRequest('短信验证码已过期')
+        if smscode != redis_sms_code.decode():
+            return HttpResponseBadRequest('短信验证码错误')
+        #保存注册信息
+        try:
+            user = User.objects.create_user(username=mobile,
+                                            mobile=mobile,
+                                            password=password)
+        except DatabaseError as e:
+            logger.error(e)
+            return HttpResponseBadRequest('注册失败')
+        #返回响应
+        return HttpResponse('注册成功，自动跳转到首页')
+
+
+
 
 from django.http.response import HttpResponseBadRequest
 from django_redis import get_redis_connection
